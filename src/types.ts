@@ -1,4 +1,4 @@
-export type ContactTypes = 'Admin' | 'Warehouse' | 'Installer' | 'Client';
+export type ContactTypes = 'admin' | 'warehouse' | 'installer' | 'customer';
 
 export type Contact = {
   id: string;
