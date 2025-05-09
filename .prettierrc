@@ -1,0 +1,17 @@
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "importOrder": [
+    "^react$",
+    "^react(.*)$",
+    "<THIRD_PARTY_MODULES>",
+    "^(components|hooks|contexts|utils|store|assets|routes|constants|api)(.*)$",
+    "^[./]"
+  ],
+  "importOrderSortSpecifiers": false,
+  "importOrderCombineTypeAndValueImports": true,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "singleAttributePerLine": true,
+  "parser": "typescript"
+}
