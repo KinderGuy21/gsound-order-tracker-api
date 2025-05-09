@@ -21,9 +21,6 @@ export class HighLevelClient {
     data?: any,
     params?: Record<string, any>,
   ): Promise<T> {
-    this.logger.debug(
-      `Making ${method} request to ${endpoint}, data: ${JSON.stringify(data, null, 2)}, params: ${params}`,
-    );
     const config: AxiosRequestConfig = {
       method,
       url: `${this.baseUrl}${endpoint}`,

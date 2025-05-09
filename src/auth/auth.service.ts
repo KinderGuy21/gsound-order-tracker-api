@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { HighLevelService } from './highlevel.service';
 import { AuthRequestDto } from './dto';
+import { Contact } from 'types';
 
 @Injectable()
 export class AuthService {
@@ -12,40 +13,45 @@ export class AuthService {
     private readonly highLevelService: HighLevelService,
   ) {}
 
-  async validateUser(authRequest: AuthRequestDto): Promise<boolean> {
+  async fetchContact(authRequest: AuthRequestDto): Promise<Contact | null> {
     try {
       const contacts = await this.highLevelService.searchContacts(
         authRequest.email,
         authRequest.phone,
       );
-      return contacts.length > 0;
+      const contact = contacts.length > 0 ? contacts[0] : null;
+      if (contact) {
+        return {
+          id: contact.id,
+          email: contact.email,
+          phone: contact.phone,
+          type: contact.type,
+          firstNameLowerCase: contact.firstNameLowerCase,
+          lastNameLowerCase: contact.lastNameLowerCase,
+        };
+      }
+      return null;
     } catch (error) {
       throw new UnauthorizedException('Failed to validate user');
     }
   }
 
   async createAccessToken({
-    user,
+    contact,
     isHyperlink = false,
   }: {
-    user: AuthRequestDto;
+    contact: Contact;
     isHyperlink?: boolean;
   }): Promise<string> {
-    const payload = {
-      email: user.email,
-      phone: user.phone,
-      type: isHyperlink ? 'hyperlink' : 'user',
-    };
-
-    return this.jwtService.sign(payload, {
+    return this.jwtService.sign(contact, {
       expiresIn: isHyperlink ? '24h' : '1h',
     });
   }
 
-  async createRefreshToken(user: AuthRequestDto): Promise<string> {
+  async createRefreshToken(contact: Contact): Promise<string> {
     const payload = {
-      email: user.email,
-      phone: user.phone,
+      email: contact.email,
+      phone: contact.phone,
       type: 'refresh',
     };
 
@@ -64,19 +70,18 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const user: AuthRequestDto = {
+      const authRequest: AuthRequestDto = {
         email: payload.email,
         phone: payload.phone,
       };
 
-      // Validate user still exists in HighLevel
-      const isValid = await this.validateUser(user);
-      if (!isValid) {
+      const contact = await this.fetchContact(authRequest);
+      if (!contact) {
         throw new UnauthorizedException('User no longer exists');
       }
 
-      const newAccessToken = await this.createAccessToken({ user });
-      const newRefreshToken = await this.createRefreshToken(user);
+      const newAccessToken = await this.createAccessToken({ contact });
+      const newRefreshToken = await this.createRefreshToken(contact);
 
       return {
         accessToken: newAccessToken,
@@ -91,18 +96,17 @@ export class AuthService {
     try {
       const payload = await this.jwtService.verifyAsync(token);
 
-      // For hyperlink tokens, we don't need to revalidate the user
       if (payload.type === 'hyperlink') {
         return payload;
       }
 
-      // For user tokens, verify the user still exists
-      const isValid = await this.validateUser({
+      const authRequest: AuthRequestDto = {
         email: payload.email,
         phone: payload.phone,
-      });
+      };
 
-      if (!isValid) {
+      const contact = await this.fetchContact(authRequest);
+      if (!contact) {
         throw new UnauthorizedException('User no longer exists');
       }
 

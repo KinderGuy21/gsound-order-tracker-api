@@ -18,9 +18,6 @@ export class HighLevelService {
       const parsePhone = phone.startsWith('0')
         ? `+972${phone.substring(1)}`
         : phone;
-      this.logger.debug(
-        `Searching for contacts with email: ${email} and phone: ${parsePhone}`,
-      );
 
       const filters = [
         {

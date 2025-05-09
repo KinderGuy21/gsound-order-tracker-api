@@ -24,17 +24,16 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Authentication successful' })
   async login(@Body() authRequest: AuthRequestDto) {
     try {
-      const isValid = await this.authService.validateUser(authRequest);
+      const contact = await this.authService.fetchContact(authRequest);
 
-      if (!isValid) {
+      if (!contact) {
         throw new UnauthorizedException('Invalid credentials');
       }
 
       const accessToken = await this.authService.createAccessToken({
-        user: authRequest,
+        contact,
       });
-      const refreshToken =
-        await this.authService.createRefreshToken(authRequest);
+      const refreshToken = await this.authService.createRefreshToken(contact);
 
       return {
         accessToken,
@@ -68,14 +67,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Generate 24h access URL for a contact' })
   @ApiResponse({ status: 200, description: 'Hyperlink generated successfully' })
   async generateHyperlink(@Body() authRequest: AuthRequestDto) {
-    const isValid = await this.authService.validateUser(authRequest);
+    const contact = await this.authService.fetchContact(authRequest);
 
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid contact');
+    if (!contact) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const hyperlinkToken = await this.authService.createAccessToken({
-      user: authRequest,
+      contact,
       isHyperlink: true,
     });
 

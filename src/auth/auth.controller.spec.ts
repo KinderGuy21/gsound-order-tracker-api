@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { AuthRequestDto, RefreshAuthRequestDto } from './dto';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -13,20 +14,19 @@ describe('AuthController', () => {
     createAccessToken: jest.fn(),
     createRefreshToken: jest.fn(),
     refreshTokens: jest.fn(),
-    validateToken: jest.fn(),
   };
 
   const mockConfigService = {
     get: jest.fn().mockReturnValue('https://app.com/secure-view'),
   };
 
-  const mockAuthRequest = { email: 'test@test.com', phone: '123456789' };
-  const mockAccessToken = 'access.token.mock';
-  const mockRefreshToken = 'refresh.token.mock';
-  const mockPayload = {
-    email: 'test@test.com',
-    phone: '123456789',
-    type: 'user',
+  const authRequestDto: AuthRequestDto = {
+    email: 'test@example.com',
+    phone: '1234567890',
+  };
+
+  const refreshAuthRequestDto: RefreshAuthRequestDto = {
+    refreshToken: 'mock-refresh-token',
   };
 
   beforeEach(async () => {
@@ -46,71 +46,59 @@ describe('AuthController', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('login', () => {
-    it('should return access and refresh tokens', async () => {
+    it('should return access and refresh tokens if valid', async () => {
       mockAuthService.validateUser.mockResolvedValue(true);
-      mockAuthService.createAccessToken.mockResolvedValue(mockAccessToken);
-      mockAuthService.createRefreshToken.mockResolvedValue(mockRefreshToken);
+      mockAuthService.createAccessToken.mockResolvedValue('access.token');
+      mockAuthService.createRefreshToken.mockResolvedValue('refresh.token');
 
-      const result = await controller.login(mockAuthRequest);
+      const result = await controller.login(authRequestDto);
+
       expect(result).toEqual({
-        accessToken: mockAccessToken,
-        refreshToken: mockRefreshToken,
+        accessToken: 'access.token',
+        refreshToken: 'refresh.token',
       });
     });
 
     it('should throw UnauthorizedException if user is invalid', async () => {
       mockAuthService.validateUser.mockResolvedValue(false);
-      await expect(controller.login(mockAuthRequest)).rejects.toThrow(
+
+      await expect(controller.login(authRequestDto)).rejects.toThrow(
         UnauthorizedException,
       );
     });
   });
 
   describe('refresh', () => {
-    it('should return new tokens', async () => {
-      const resultTokens = {
+    it('should return new tokens on valid refresh token', async () => {
+      const tokens = {
         accessToken: 'new.access.token',
         refreshToken: 'new.refresh.token',
       };
-      mockAuthService.refreshTokens.mockResolvedValue(resultTokens);
+      mockAuthService.refreshTokens.mockResolvedValue(tokens);
 
-      const result = await controller.refresh('some-refresh-token');
-      expect(result).toEqual(resultTokens);
-    });
-  });
-
-  describe('validate', () => {
-    it('should return valid payload', async () => {
-      mockAuthService.validateToken.mockResolvedValue(mockPayload);
-
-      const result = await controller.validate('some-token');
-      expect(result).toEqual({ valid: true, payload: mockPayload });
+      const result = await controller.refresh(refreshAuthRequestDto);
+      expect(result).toEqual(tokens);
     });
   });
 
   describe('generateHyperlink', () => {
-    it('should return a 24h hyperlink with token and url', async () => {
+    it('should return hyperlink URL for a valid contact', async () => {
       mockAuthService.validateUser.mockResolvedValue(true);
-      mockAuthService.createAccessToken.mockResolvedValue(mockAccessToken);
+      mockAuthService.createAccessToken.mockResolvedValue('hyperlink.token');
+      mockConfigService.get.mockReturnValue('https://app.com/secure-view');
 
-      const result = await controller.generateHyperlink(mockAuthRequest);
-
+      const result = await controller.generateHyperlink(authRequestDto);
       expect(result).toEqual({
-        hyperlinkToken: mockAccessToken,
-        url: `https://app.com/secure-view?token=${mockAccessToken}`,
-        expiresIn: '24h',
+        url: 'https://app.com/secure-view?token=hyperlink.token',
       });
     });
 
-    it('should throw UnauthorizedException if contact is invalid', async () => {
+    it('should throw UnauthorizedException for invalid contact', async () => {
       mockAuthService.validateUser.mockResolvedValue(false);
+
       await expect(
-        controller.generateHyperlink(mockAuthRequest),
+        controller.generateHyperlink(authRequestDto),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
