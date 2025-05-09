@@ -13,6 +13,8 @@
     "paths": {
       "auth/*": ["auth/*"],
       "common/*": ["common/*"],
+      "orders/*": ["orders/*"],
+      "services/*": ["services/*"],
     },
     "incremental": true,
     "skipLibCheck": true,

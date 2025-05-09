@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { HighLevelService } from './highlevel.service';
-import { AuthRequestDto } from './dto';
+import { HighLevelService } from 'services';
 import { Contact } from 'types';
+import { AuthRequestDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +28,7 @@ export class AuthService {
           type: contact.type,
           firstNameLowerCase: contact.firstNameLowerCase,
           lastNameLowerCase: contact.lastNameLowerCase,
+          ...(contact?.customFields && { customFields: contact.customFields }),
         };
       }
       return null;

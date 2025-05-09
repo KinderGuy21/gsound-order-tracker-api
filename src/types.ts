@@ -7,4 +7,5 @@ export type Contact = {
   type: ContactTypes;
   firstNameLowerCase: string;
   lastNameLowerCase: string;
+  customFields?: Record<string, any> | [];
 };

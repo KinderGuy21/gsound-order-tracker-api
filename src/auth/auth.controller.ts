@@ -7,9 +7,10 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import { Public } from 'common';
 import { AuthService } from './auth.service';
 import { AuthRequestDto, RefreshAuthRequestDto } from './dto';
-import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -19,6 +20,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Authenticate user and get tokens' })
   @ApiResponse({ status: 200, description: 'Authentication successful' })
@@ -63,6 +65,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('generate-hyperlink')
   @ApiOperation({ summary: 'Generate 24h access URL for a contact' })
   @ApiResponse({ status: 200, description: 'Hyperlink generated successfully' })

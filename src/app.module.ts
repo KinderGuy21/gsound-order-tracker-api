@@ -1,7 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthModule } from 'auth';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { AuthModule, JwtAuthGuard } from 'auth';
 import { LoggerMiddleware } from 'common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -22,7 +23,11 @@ import { AppService } from './app.service';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    Reflector,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
