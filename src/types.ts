@@ -9,3 +9,21 @@ export type Contact = {
   lastNameLowerCase: string;
   customFields?: Record<string, any> | [];
 };
+
+export type PipelineStages = {
+  id: string;
+  name: string;
+  position: number;
+  showInPieChart?: boolean;
+  showInFunnel?: boolean;
+};
+
+export type Pipeline = {
+  id: string;
+  name: string;
+  showInPieChart?: boolean;
+  showInFunnel?: boolean;
+  dateAdded: string;
+  dateUpdated: string;
+  stages: PipelineStages[];
+};

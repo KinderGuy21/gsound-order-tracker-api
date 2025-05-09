@@ -1,20 +1,29 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HighLevelClient } from 'common';
+import { Pipeline } from 'types';
 
 @Injectable()
 export class HighLevelService {
   private readonly locationId: string;
+  private readonly pipelineId: string;
   private readonly logger = new Logger(HighLevelService.name);
   private ghlClient: HighLevelClient;
 
   constructor(private readonly configService: ConfigService) {
     this.locationId = this.configService.get<string>('HIGHLEVEL_LOCATION_ID')!;
+    this.pipelineId = this.configService.get<string>('HIGHLEVEL_PIPELINE_ID')!;
     this.ghlClient = new HighLevelClient(configService);
   }
 
   async searchContacts(email: string, phone: string): Promise<any[]> {
     try {
+      if (!email || !phone) {
+        throw new HttpException(
+          'Email and phone are required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const parsePhone = phone.startsWith('0')
         ? `+972${phone.substring(1)}`
         : phone;
@@ -60,6 +69,123 @@ export class HighLevelService {
     } catch (error) {
       throw new HttpException(
         'Failed to search contacts',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async fetchPipelines(): Promise<Pipeline[]> {
+    try {
+      const result: { pipelines?: any } = await this.ghlClient.request(
+        `/pipelines?locationId=${this.locationId}`,
+        'GET',
+      );
+
+      if (result) {
+        return result.pipelines || null;
+      }
+      return null;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async fetchOpportunities({
+    stageId,
+    limit = 20,
+    startAfter = null,
+    startAfterId = null,
+  }: {
+    stageId: string;
+    limit: number;
+    startAfter?: string | null;
+    startAfterId?: string | null;
+  }): Promise<any> {
+    try {
+      if (!stageId) {
+        throw new HttpException('Stage ID is required', HttpStatus.BAD_REQUEST);
+      }
+      const result: { opportunities?: any; meta?: any } =
+        await this.ghlClient.request(
+          `/opportunities/search`,
+          'GET',
+          {},
+          {
+            location_id: this.locationId,
+            pipeline_id: this.pipelineId,
+            pipeline_stage_id: stageId,
+            limit,
+            startAfter: startAfter || null,
+            startAfterId: startAfterId || null,
+          },
+        );
+
+      if (result) {
+        return { opportunities: result?.opportunities, meta: result?.meta };
+      }
+      return null;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async fetchOpportunity(id: string): Promise<any> {
+    try {
+      if (!id) {
+        throw new HttpException(
+          'Opportunity ID is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const result: { opportunity?: any } = await this.ghlClient.request(
+        `/opportunities/${id}`,
+        'GET',
+      );
+
+      if (result) {
+        return result.opportunity || null;
+      }
+      return null;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updateOpportunity(
+    id: string,
+    customFields: Record<string, any>[],
+  ): Promise<any> {
+    try {
+      if (!id) {
+        throw new HttpException(
+          'Opportunity ID is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const result: { opportunity?: any } = await this.ghlClient.request(
+        `/opportunities/${id}`,
+        'PUT',
+        {
+          customFields,
+        },
+      );
+
+      if (result) {
+        return result.opportunity || null;
+      }
+      return null;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
