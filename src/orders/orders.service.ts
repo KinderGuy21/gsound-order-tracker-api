@@ -91,4 +91,31 @@ export class OrdersService {
     }
     return returnPayload;
   }
+
+  async receiveOpportunity(opportunityId: string): Promise<Opportunity | null> {
+    const opportunity =
+      await this.highLevelService.fetchOpportunity(opportunityId);
+    if (!opportunity) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return opportunity;
+  }
+
+  async updateOpportunity(
+    opportunityId: string,
+    body: Partial<Opportunity>,
+  ): Promise<Opportunity | null> {
+    const opportunity =
+      await this.highLevelService.fetchOpportunity(opportunityId);
+    if (!opportunity) {
+      throw new HttpException(
+        'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return opportunity;
+  }
 }
