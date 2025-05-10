@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { AuthModule, JwtAuthGuard } from 'auth';
+import { OrdersModule } from 'orders';
 import { LoggerMiddleware } from 'common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
       global: true,
     }),
     AuthModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

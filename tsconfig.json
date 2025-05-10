@@ -15,6 +15,7 @@
       "common/*": ["common/*"],
       "orders/*": ["orders/*"],
       "services/*": ["services/*"],
+      "utils/*": ["utils/*"],
     },
     "incremental": true,
     "skipLibCheck": true,

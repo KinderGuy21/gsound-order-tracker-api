@@ -35,7 +35,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
       const logMessage = `
 🛰️  ${method} ${originalUrl}
-📝 Body: ${JSON.stringify(body)}
+${body ? `📝 Body: ${JSON.stringify(body)}` : ''}
 📤 Status: ${statusCode} (${HttpStatus[statusCode] || 'Unknown'})
 ⏱️  Response Time: ${responseTime}ms
 ${isError ? `🚨 Response Body:\n${responseBody}\n` : ''}

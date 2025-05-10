@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { HighLevelService } from 'services';
 import { Contact } from 'types';
 import { AuthRequestDto } from './dto';
@@ -9,7 +8,6 @@ import { AuthRequestDto } from './dto';
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly highLevelService: HighLevelService,
   ) {}
 
@@ -101,15 +99,15 @@ export class AuthService {
         return payload;
       }
 
-      const authRequest: AuthRequestDto = {
-        email: payload.email,
-        phone: payload.phone,
-      };
+      // const authRequest: AuthRequestDto = {
+      //   email: payload.email,
+      //   phone: payload.phone,
+      // };
 
-      const contact = await this.fetchContact(authRequest);
-      if (!contact) {
-        throw new UnauthorizedException('User no longer exists');
-      }
+      // const contact = await this.fetchContact(authRequest);
+      // if (!contact) {
+      //   throw new UnauthorizedException('User no longer exists');
+      // }
 
       return payload;
     } catch (error) {

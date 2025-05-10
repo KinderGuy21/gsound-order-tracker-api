@@ -1,26 +1,94 @@
-import { Injectable } from '@nestjs/common';
-// import { CreateOrderDto } from './dto/create-order.dto';
-// import { UpdateOrderDto } from './dto/update-order.dto';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ContactTypeEnum } from 'enums';
+import { HighLevelService } from 'services';
+import { Contact, Opportunity, Pipeline, PipelineStages } from 'types';
+import { transformNextPageUrl, validateInstallerId } from 'utils';
 
 @Injectable()
 export class OrdersService {
-  // create(createOrderDto: CreateOrderDto) {
-  //   return 'This action adds a new order';
-  // }
+  private readonly logger = new Logger(OrdersService.name);
+  constructor(private readonly highLevelService: HighLevelService) {}
 
-  findAll() {
-    return `This action returns all orders`;
+  async receivePipelineStages(): Promise<PipelineStages[]> {
+    const pipelines = await this.highLevelService.fetchPipelines();
+    if (!pipelines) {
+      throw new HttpException(
+        'Failed to search contacts',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    const pipeline: Pipeline | undefined = pipelines.find(
+      (p) => p.id === process.env.HIGHLEVEL_PIPELINE_ID,
+    );
+    if (!pipeline) {
+      throw new HttpException(
+        'Pipeline not found',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return pipeline.stages;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
-  }
+  async receiveUserOpportunities({
+    stageIds,
+    user,
+    limit = 20,
+    startAfter = null,
+    startAfterId = null,
+  }: {
+    stageIds: string[];
+    user: Contact;
+    limit?: number;
+    startAfter?: string | null;
+    startAfterId?: string | null;
+  }) {
+    let returnPayload = {};
+    stageIds.forEach(async (stageId) => {
+      const stageInfo = await this.highLevelService.fetchOpportunities({
+        stageId: stageId,
+        limit,
+        startAfter,
+        startAfterId,
+      });
 
-  // update(id: number, updateOrderDto: UpdateOrderDto) {
-  //   return `This action updates a #${id} order`;
-  // }
+      if (!stageInfo || !stageInfo?.opportunities || !stageInfo?.meta) {
+        throw new HttpException(
+          `Failed to receive opportunities for stage ID: ${stageId}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+      const { opportunities, meta } = stageInfo;
+
+      const filteredOpportunities = opportunities.filter((opportunity) => {
+        const userType = user?.type;
+
+        if (
+          userType === ContactTypeEnum.ADMIN ||
+          userType === ContactTypeEnum.WAREHOUSE
+        )
+          return true;
+
+        if (userType === ContactTypeEnum.INSTALLER) {
+          return validateInstallerId(opportunity, user);
+        }
+
+        return false;
+      });
+
+      const updatedMeta = {
+        ...meta,
+        total: filteredOpportunities.length,
+        ...(meta?.nextPageUrl && {
+          nextPageUrl: transformNextPageUrl(meta.nextPageUrl),
+        }),
+      };
+
+      returnPayload[stageId] = {
+        opportunities: filteredOpportunities,
+        meta: updatedMeta,
+      };
+    });
+    return returnPayload;
   }
 }

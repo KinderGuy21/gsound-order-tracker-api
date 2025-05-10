@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios, { AxiosRequestConfig, Method } from 'axios';
 
 export class HighLevelClient {
@@ -9,10 +8,10 @@ export class HighLevelClient {
 
   private readonly logger = new Logger(HighLevelClient.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.baseUrl = this.configService.get<string>('HIGHLEVEL_API_URL')!;
-    this.apiToken = this.configService.get<string>('HIGHLEVEL_TOKEN_API')!;
-    this.version = this.configService.get<string>('HIGHLEVEL_VERSION')!;
+  constructor() {
+    this.baseUrl = process.env.HIGHLEVEL_API_URL!;
+    this.apiToken = process.env.HIGHLEVEL_TOKEN_API!;
+    this.version = process.env.HIGHLEVEL_VERSION!;
   }
 
   async request<T>(
@@ -32,7 +31,6 @@ export class HighLevelClient {
       params,
       data,
     };
-
     const response = await axios(config);
     return response.data;
   }

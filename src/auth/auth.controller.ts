@@ -7,7 +7,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
 import { Public } from 'common';
 import { AuthService } from './auth.service';
 import { AuthRequestDto, RefreshAuthRequestDto } from './dto';
@@ -15,10 +14,7 @@ import { AuthRequestDto, RefreshAuthRequestDto } from './dto';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('login')
@@ -81,7 +77,7 @@ export class AuthController {
       isHyperlink: true,
     });
 
-    const baseUrl = this.configService.get<string>('HYPERLINK_BASE_URL')!;
+    const baseUrl = process.env.HYPERLINK_BASE_URL;
     const url = `${baseUrl}?token=${hyperlinkToken}`;
 
     return {

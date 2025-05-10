@@ -1,7 +1,6 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HighLevelClient } from 'common';
-import { Pipeline } from 'types';
+import { Opportunity, OpportunityMeta, Pipeline } from 'types';
 
 @Injectable()
 export class HighLevelService {
@@ -10,10 +9,10 @@ export class HighLevelService {
   private readonly logger = new Logger(HighLevelService.name);
   private ghlClient: HighLevelClient;
 
-  constructor(private readonly configService: ConfigService) {
-    this.locationId = this.configService.get<string>('HIGHLEVEL_LOCATION_ID')!;
-    this.pipelineId = this.configService.get<string>('HIGHLEVEL_PIPELINE_ID')!;
-    this.ghlClient = new HighLevelClient(configService);
+  constructor() {
+    this.locationId = process.env.HIGHLEVEL_LOCATION_ID!;
+    this.pipelineId = process.env.HIGHLEVEL_PIPELINE_ID!;
+    this.ghlClient = new HighLevelClient();
   }
 
   async searchContacts(email: string, phone: string): Promise<any[]> {
@@ -74,10 +73,10 @@ export class HighLevelService {
     }
   }
 
-  async fetchPipelines(): Promise<Pipeline[]> {
+  async fetchPipelines(): Promise<Pipeline[] | null> {
     try {
       const result: { pipelines?: any } = await this.ghlClient.request(
-        `/pipelines?locationId=${this.locationId}`,
+        `/opportunities/pipelines?locationId=${this.locationId}`,
         'GET',
       );
 
@@ -87,7 +86,7 @@ export class HighLevelService {
       return null;
     } catch (error) {
       throw new HttpException(
-        'Failed to fetch opportunity',
+        'Failed to fetch pipelines',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -103,7 +102,10 @@ export class HighLevelService {
     limit: number;
     startAfter?: string | null;
     startAfterId?: string | null;
-  }): Promise<any> {
+  }): Promise<{
+    opportunities?: Opportunity[];
+    meta?: OpportunityMeta;
+  } | null> {
     try {
       if (!stageId) {
         throw new HttpException('Stage ID is required', HttpStatus.BAD_REQUEST);
@@ -135,7 +137,7 @@ export class HighLevelService {
     }
   }
 
-  async fetchOpportunity(id: string): Promise<any> {
+  async fetchOpportunity(id: string): Promise<Opportunity | null> {
     try {
       if (!id) {
         throw new HttpException(
@@ -163,7 +165,7 @@ export class HighLevelService {
   async updateOpportunity(
     id: string,
     customFields: Record<string, any>[],
-  ): Promise<any> {
+  ): Promise<Opportunity | null> {
     try {
       if (!id) {
         throw new HttpException(
