@@ -94,7 +94,7 @@ export class HighLevelService {
 
   async fetchOpportunities({
     stageId,
-    limit = 20,
+    limit = 50,
     startAfter = null,
     startAfterId = null,
   }: {

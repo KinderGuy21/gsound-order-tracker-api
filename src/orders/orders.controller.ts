@@ -30,7 +30,10 @@ export class OrdersController {
   }
 
   @Get('opportunities')
-  @ApiOperation({ summary: 'Receive the pipeline stages based on ID' })
+  @ApiOperation({
+    summary:
+      'Receive the pipeline stages based on stage IDs, filtered by authenticated users',
+  })
   @ApiResponse({
     status: 200,
     description: 'Pipeline Stages Received Successfully',

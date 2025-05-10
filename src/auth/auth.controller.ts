@@ -6,7 +6,12 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Public } from 'common';
 import { AuthService } from './auth.service';
 import { AuthRequestDto, RefreshAuthRequestDto } from './dto';
@@ -45,6 +50,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth('access-token')
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refresh successful' })

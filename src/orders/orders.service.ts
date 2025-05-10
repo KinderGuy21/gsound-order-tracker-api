@@ -32,7 +32,7 @@ export class OrdersService {
   async receiveUserOpportunities({
     stageIds,
     user,
-    limit = 20,
+    limit = 50,
     startAfter = null,
     startAfterId = null,
   }: {
@@ -43,7 +43,7 @@ export class OrdersService {
     startAfterId?: string | null;
   }) {
     let returnPayload = {};
-    stageIds.forEach(async (stageId) => {
+    for (const stageId of stageIds) {
       const stageInfo = await this.highLevelService.fetchOpportunities({
         stageId: stageId,
         limit,
@@ -88,7 +88,7 @@ export class OrdersService {
         opportunities: filteredOpportunities,
         meta: updatedMeta,
       };
-    });
+    }
     return returnPayload;
   }
 }
