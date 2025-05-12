@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ContactTypeEnum, OpportunityRolesStages } from 'enums';
 import { HighLevelService } from 'services';
-import { Contact, Opportunity, Pipeline, PipelineStages } from 'types';
+import { Contact, Opportunity, OpportunityMeta } from 'types';
 import { transformNextPageUrl, validateInstallerId } from 'utils';
 
 @Injectable()
@@ -32,7 +32,10 @@ export class OrdersService {
       }
       stageIds = stages.split(',');
     }
-    let returnPayload = {};
+    let returnPayload: {
+      opportunities: Opportunity[];
+      stages: Record<string, OpportunityMeta>;
+    } = { opportunities: [], stages: {} };
     for (const stageId of stageIds) {
       const stageInfo = await this.highLevelService.fetchOpportunities({
         stageId: stageId,
@@ -50,34 +53,34 @@ export class OrdersService {
 
       const { opportunities, meta } = stageInfo;
 
-      const filteredOpportunities = opportunities.filter((opportunity) => {
-        const userType = user?.type;
+      const filteredOpportunities: Opportunity[] = opportunities.filter(
+        (opportunity) => {
+          const userType = user?.type;
 
-        if (
-          userType === ContactTypeEnum.ADMIN ||
-          userType === ContactTypeEnum.WAREHOUSE
-        )
-          return true;
+          if (
+            userType === ContactTypeEnum.ADMIN ||
+            userType === ContactTypeEnum.WAREHOUSE
+          )
+            return true;
 
-        if (userType === ContactTypeEnum.INSTALLER) {
-          return validateInstallerId(opportunity, user);
-        }
+          if (userType === ContactTypeEnum.INSTALLER) {
+            return validateInstallerId(opportunity, user);
+          }
 
-        return false;
-      });
+          return false;
+        },
+      );
 
       const updatedMeta = {
-        ...meta,
         total: filteredOpportunities.length,
         ...(meta?.nextPageUrl && {
           nextPageUrl: transformNextPageUrl(meta.nextPageUrl),
         }),
       };
-
-      returnPayload[stageId] = {
-        opportunities: filteredOpportunities,
-        meta: updatedMeta,
-      };
+      if (filteredOpportunities.length !== 0) {
+        returnPayload.opportunities.push(...filteredOpportunities);
+        returnPayload.stages[stageId] = updatedMeta;
+      }
     }
     return returnPayload;
   }

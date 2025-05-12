@@ -48,10 +48,5 @@ export type Opportunity = {
 
 export type OpportunityMeta = {
   total: number;
-  currentPage: number;
-  nextPage?: number;
-  prevPage?: number;
   nextPageUrl?: string;
-  startAfterId?: string;
-  startAfter?: number;
 };
