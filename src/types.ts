@@ -1,4 +1,4 @@
-import { ContactTypeEnum } from './enums';
+import { ContactTypeEnum } from 'enums';
 export interface RequestWithUser extends Request {
   user: Contact;
 }

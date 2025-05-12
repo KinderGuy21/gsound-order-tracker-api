@@ -162,10 +162,15 @@ export class HighLevelService {
     }
   }
 
-  async updateOpportunity(
-    id: string,
-    customFields: Record<string, any>[],
-  ): Promise<Opportunity | null> {
+  async editOpportunity({
+    id,
+    customFields,
+    stageId = null,
+  }: {
+    id: string;
+    stageId?: string | null;
+    customFields: Record<string, any>[];
+  }): Promise<Opportunity | null> {
     try {
       if (!id) {
         throw new HttpException(
@@ -177,6 +182,7 @@ export class HighLevelService {
         `/opportunities/${id}`,
         'PUT',
         {
+          ...(stageId && { pipelineStageId: stageId }),
           customFields,
         },
       );

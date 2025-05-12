@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PipelineStages, RequestWithUser } from 'types';
+import { RequestWithUser } from 'types';
 import { ReceiveOpportunitiesQueryDto, UpdateOpportunityDto } from './dto';
 
 @ApiBearerAuth('access-token')
@@ -62,9 +62,10 @@ export class OrdersController {
     description: 'Opportunity Updated Successfully',
   })
   async updateOpportunity(
+    @Request() req: RequestWithUser,
     @Param('opportunityId') opportunityId: string,
     @Body() body: UpdateOpportunityDto,
   ) {
-    return this.ordersService.updateOpportunity(opportunityId, body);
+    return this.ordersService.updateOpportunity(req.user, opportunityId, body);
   }
 }
