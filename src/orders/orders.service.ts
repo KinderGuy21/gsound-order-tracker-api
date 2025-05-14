@@ -45,7 +45,9 @@ export class OrdersService {
     startAfterId?: string | null;
   }) {
     if (!stageIds || stageIds.length === 0) {
-      const stages = OpportunityRolesStages[user.type.toUpperCase()];
+      const userTypeKey =
+        user.type.toUpperCase() as keyof typeof OpportunityRolesStages;
+      const stages = OpportunityRolesStages[userTypeKey];
       if (!stages) {
         throw new HttpException(
           'Failed to fetch pipeline stages',
@@ -54,7 +56,7 @@ export class OrdersService {
       }
       stageIds = stages.split(',');
     }
-    let returnPayload: {
+    const returnPayload: {
       opportunities: Opportunity[];
       stages: Record<string, OpportunityMeta>;
     } = { opportunities: [], stages: {} };
@@ -138,14 +140,14 @@ export class OrdersService {
       const customFieldsToUpdate: Record<string, any>[] = [];
       const installerStages = OpportunityRolesStages.INSTALLER.split(',');
 
-      if (user.type === ContactRoles.WAREHOUSE) {
+      if (user.type === (ContactRoles.WAREHOUSE as ContactTypeEnum)) {
         validateWarehouseStatus(status);
         prepareWarehouseUpdates(body, customFieldsToUpdate);
 
         if (status === WarehouseStatus.SENT) {
           stageId = installerStages[0];
         }
-      } else if (user.type === ContactRoles.INSTALLER) {
+      } else if (user.type === (ContactRoles.INSTALLER as ContactTypeEnum)) {
         validateInstallerStatus(status);
         prepareInstallerUpdates(body, customFieldsToUpdate);
 

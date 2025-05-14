@@ -26,7 +26,22 @@ export class UpdateOpportunityDto {
     example: '2025-06-15T10:00:00.000Z',
   })
   @ValidateIf(
-    (o) =>
+    (o: UpdateOpportunityDto) =>
+      o.userType === ContactTypeEnum.WAREHOUSE &&
+      o.status === WarehouseStatus.STUCK,
+  )
+  @IsString({
+    message: 'Stuck Reason is required when status is "תקוע".',
+  })
+  stuckReason?: string;
+
+  @ApiProperty({
+    description: 'Installation date (required when installer status is "תואם")',
+    required: false,
+    example: '2025-06-15T10:00:00.000Z',
+  })
+  @ValidateIf(
+    (o: UpdateOpportunityDto) =>
       o.userType === ContactTypeEnum.INSTALLER &&
       o.status === InstallerStatus.SCHEDULED,
   )
@@ -43,7 +58,7 @@ export class UpdateOpportunityDto {
     example: 'https://example.com/images/result-123.jpg',
   })
   @ValidateIf(
-    (o) =>
+    (o: UpdateOpportunityDto) =>
       o.userType === ContactTypeEnum.INSTALLER &&
       o.status === InstallerStatus.INSTALLED,
   )
@@ -63,11 +78,13 @@ export class UpdateOpportunityDto {
     example: 'https://example.com/images/invoice-123.jpg',
   })
   @ValidateIf(
-    (o) =>
+    (o: UpdateOpportunityDto) =>
       o.userType === ContactTypeEnum.INSTALLER &&
       o.status === InstallerStatus.INSTALLED,
   )
   @IsOptional()
   @IsUrl({}, { message: 'Invoice image must be a valid URL' })
   invoiceImage?: string;
+
+  userType: ContactTypeEnum;
 }

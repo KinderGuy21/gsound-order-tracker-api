@@ -50,3 +50,9 @@ export type OpportunityMeta = {
   total: number;
   nextPageUrl?: string;
 };
+
+export type OpportunityCustomField = {
+  id: string;
+  fieldValueString?: string;
+  value?: any;
+};

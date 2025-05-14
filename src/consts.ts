@@ -22,6 +22,7 @@ export const OpportunityCustomFieldsIds = {
   INSTALL_DATE: 'L5PKDTn1Sf8nBKAwDslc',
   RESULT_IMAGE: 'ZySgPkOKHC7YpJF2ShqZ',
   INVOICE_IMAGE: 'AEiZJhk4IJSf0XJF5dFl',
+  STUCK_REASON: '95UkzRHQsZzFDHx8lV2r',
 };
 
 export const WarehouseStatus = {

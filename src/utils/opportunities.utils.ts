@@ -56,6 +56,19 @@ export function prepareWarehouseUpdates(
     id: OpportunityRolesStatusFields.WAREHOUSE,
     value: body.status,
   });
+
+  if (body.status === WarehouseStatus.STUCK) {
+    if (!body.stuckReason) {
+      throw new BadRequestException(
+        'stuckReason is required when status is "תקוע"',
+      );
+    }
+
+    customFieldsToUpdate.push({
+      id: OpportunityCustomFieldsIds.STUCK_REASON,
+      value: body.stuckReason,
+    });
+  }
 }
 
 export function prepareInstallerUpdates(
