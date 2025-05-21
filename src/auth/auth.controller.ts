@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -68,10 +69,13 @@ export class AuthController {
   }
 
   @Public()
-  @Post('generate-hyperlink')
+  @Post('generate-hyperlink/:id')
   @ApiOperation({ summary: 'Generate 24h access URL for a contact' })
   @ApiResponse({ status: 200, description: 'Hyperlink generated successfully' })
-  async generateHyperlink(@Body() authRequest: AuthRequestDto) {
+  async generateHyperlink(
+    @Body() authRequest: AuthRequestDto,
+    @Param('id') id: string,
+  ) {
     const contact = await this.authService.fetchContact(authRequest);
 
     if (!contact) {
@@ -84,7 +88,7 @@ export class AuthController {
     });
 
     const baseUrl = process.env.HYPERLINK_BASE_URL;
-    const url = `${baseUrl}?token=${hyperlinkToken}`;
+    const url = `${baseUrl}/order/${id}/view?token=${hyperlinkToken}`;
 
     return {
       url,
