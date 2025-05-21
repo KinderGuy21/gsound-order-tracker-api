@@ -56,3 +56,20 @@ export type OpportunityCustomField = {
   fieldValueString?: string;
   value?: any;
 };
+
+export type PhotoUpload = {
+  uploadedFiles: Record<string, any>;
+  meta: {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    url: string;
+  }[];
+};
+
+export type InstallerFiles = {
+  resultImage?: Express.Multer.File;
+  invoiceImage?: Express.Multer.File;
+};

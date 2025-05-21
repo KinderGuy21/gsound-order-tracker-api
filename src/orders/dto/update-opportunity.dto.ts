@@ -52,30 +52,19 @@ export class UpdateOpportunityDto {
   installDate?: string;
 
   @ApiProperty({
-    description:
-      'URL to the result image (required when installer status is "הותקן")',
+    description: 'Result image (required when installer status is "הותקן")',
     required: false,
-    example: 'https://example.com/images/result-123.jpg',
   })
   @ValidateIf(
     (o: UpdateOpportunityDto) =>
       o.userType === ContactTypeEnum.INSTALLER &&
       o.status === InstallerStatus.INSTALLED,
   )
-  @IsUrl(
-    {},
-    {
-      message:
-        'A valid URL for the result image is required when status is "הותקן"',
-    },
-  )
-  resultImage?: string;
+  resultImage?: Express.Multer.File;
 
   @ApiProperty({
-    description:
-      'URL to the invoice image (optional when installer status is "הותקן")',
+    description: 'Invoice image (optional when installer status is "הותקן")',
     required: false,
-    example: 'https://example.com/images/invoice-123.jpg',
   })
   @ValidateIf(
     (o: UpdateOpportunityDto) =>
@@ -83,8 +72,8 @@ export class UpdateOpportunityDto {
       o.status === InstallerStatus.INSTALLED,
   )
   @IsOptional()
-  @IsUrl({}, { message: 'Invoice image must be a valid URL' })
-  invoiceImage?: string;
+  invoiceImage?: Express.Multer.File;
 
+  @IsOptional()
   userType: ContactTypeEnum;
 }

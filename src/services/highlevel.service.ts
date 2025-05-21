@@ -1,6 +1,8 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HighLevelClient } from 'common';
-import { Opportunity, OpportunityMeta, Pipeline } from 'types';
+import * as FormData from 'form-data';
+import { v4 as uuidv4 } from 'uuid';
+import { Opportunity, OpportunityMeta, PhotoUpload, Pipeline } from 'types';
 
 @Injectable()
 export class HighLevelService {
@@ -66,6 +68,7 @@ export class HighLevelService {
       }
       return [];
     } catch (error) {
+      this.logger.error('Error searching contacts:', error);
       throw new HttpException(
         'Failed to search contacts',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -75,7 +78,7 @@ export class HighLevelService {
 
   async fetchPipelines(): Promise<Pipeline[] | null> {
     try {
-      const result: { pipelines?: any } = await this.ghlClient.request(
+      const result: { pipelines?: Pipeline[] } = await this.ghlClient.request(
         `/opportunities/pipelines?locationId=${this.locationId}`,
         'GET',
       );
@@ -85,6 +88,7 @@ export class HighLevelService {
       }
       return null;
     } catch (error) {
+      this.logger.error('Error fetching pipelines:', error);
       throw new HttpException(
         'Failed to fetch pipelines',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -110,7 +114,7 @@ export class HighLevelService {
       if (!stageId) {
         throw new HttpException('Stage ID is required', HttpStatus.BAD_REQUEST);
       }
-      const result: { opportunities?: any; meta?: any } =
+      const result: { opportunities?: Opportunity[]; meta?: OpportunityMeta } =
         await this.ghlClient.request(
           `/opportunities/search`,
           'GET',
@@ -130,6 +134,7 @@ export class HighLevelService {
       }
       return null;
     } catch (error) {
+      this.logger.error('Error fetching opportunities:', error);
       throw new HttpException(
         'Failed to fetch opportunity',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -145,16 +150,15 @@ export class HighLevelService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const result: { opportunity?: any } = await this.ghlClient.request(
-        `/opportunities/${id}`,
-        'GET',
-      );
+      const result: { opportunity?: Opportunity } =
+        await this.ghlClient.request(`/opportunities/${id}`, 'GET');
 
       if (result) {
         return result.opportunity || null;
       }
       return null;
     } catch (error) {
+      this.logger.error('Error fetching opportunity:', error);
       throw new HttpException(
         'Failed to fetch opportunity',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -178,22 +182,67 @@ export class HighLevelService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const result: { opportunity?: any } = await this.ghlClient.request(
-        `/opportunities/${id}`,
-        'PUT',
-        {
+      const result: { opportunity?: Opportunity } =
+        await this.ghlClient.request(`/opportunities/${id}`, 'PUT', {
           ...(stageId && { pipelineStageId: stageId }),
           customFields,
-        },
-      );
+        });
 
       if (result) {
         return result.opportunity || null;
       }
       return null;
     } catch (error) {
+      this.logger.error('Error editing opportunity:', error);
       throw new HttpException(
         'Failed to fetch opportunity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async uploadPhoto({
+    file,
+    fieldId,
+  }: {
+    file: Express.Multer.File;
+    fieldId: string;
+  }): Promise<PhotoUpload | null> {
+    try {
+      if (!file || !fieldId) {
+        throw new HttpException(
+          'Missing fields or file buffer',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const fileInfo = file[0];
+
+      const formData = new FormData();
+
+      formData.append(fieldId, fileInfo.buffer, {
+        filename: fileInfo.originalname || 'upload.png',
+        contentType: fileInfo.mimetype || 'application/octet-stream',
+        knownLength: fileInfo.size,
+      });
+
+      formData.append('id', fieldId);
+      formData.append('maxFiles', '1');
+
+      const headers = formData.getHeaders();
+
+      const result: PhotoUpload = await this.ghlClient.request(
+        `/locations/${this.locationId}/customFields/upload`,
+        'POST',
+        formData,
+        null,
+        headers,
+      );
+
+      return result || null;
+    } catch (error) {
+      this.logger.error('Error uploading photo:', error);
+      throw new HttpException(
+        'Failed to upload photo',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

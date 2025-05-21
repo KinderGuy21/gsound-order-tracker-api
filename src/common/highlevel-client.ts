@@ -17,21 +17,26 @@ export class HighLevelClient {
   async request<T>(
     endpoint: string,
     method: Method = 'GET',
-    data?: any,
-    params?: Record<string, any>,
+    data?: Record<string, any> | FormData | null,
+    params?: Record<string, any> | null,
+    headers?: Record<string, string>,
   ): Promise<T> {
+    const isFormData = data instanceof FormData;
+
     const config: AxiosRequestConfig = {
       method,
       url: `${this.baseUrl}${endpoint}`,
       headers: {
         Authorization: `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json',
-        Version: this.version,
+        'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+        ...(this.version ? { Version: this.version } : {}),
+        ...headers,
       },
       params,
       data,
     };
+
     const response = await axios(config);
-    return response.data;
+    return response.data as T;
   }
 }

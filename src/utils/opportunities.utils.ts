@@ -6,6 +6,7 @@ import {
   WarehouseStatus,
 } from 'consts';
 import { UpdateOpportunityDto } from 'orders/dto';
+import { InstallerFiles } from 'types';
 
 export function transformNextPageUrl(originalUrl: string): string {
   try {
@@ -74,6 +75,7 @@ export function prepareWarehouseUpdates(
 export function prepareInstallerUpdates(
   body: UpdateOpportunityDto,
   customFieldsToUpdate: Record<string, any>[],
+  files: InstallerFiles,
 ): void {
   customFieldsToUpdate.push({
     id: OpportunityRolesStatusFields.INSTALLER,
@@ -92,22 +94,10 @@ export function prepareInstallerUpdates(
       value: body.installDate,
     });
   } else if (body.status === InstallerStatus.INSTALLED) {
-    if (!body.resultImage) {
+    if (!files?.resultImage) {
       throw new BadRequestException(
         'resultImage is required when status is "הותקן"',
       );
-    }
-
-    customFieldsToUpdate.push({
-      id: OpportunityCustomFieldsIds.RESULT_IMAGE,
-      value: body.resultImage,
-    });
-
-    if (body.invoiceImage) {
-      customFieldsToUpdate.push({
-        id: OpportunityCustomFieldsIds.INVOICE_IMAGE,
-        value: body.invoiceImage,
-      });
     }
   }
 }

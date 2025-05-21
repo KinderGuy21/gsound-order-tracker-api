@@ -9,12 +9,19 @@ import {
   ContactRoles,
   FinishedOpportunityStage,
   InstallerStatus,
+  OpportunityCustomFieldsIds,
   OpportunityRolesStages,
   WarehouseStatus,
 } from 'consts';
 import { ContactTypeEnum } from 'enums';
 import { HighLevelService } from 'services';
-import { Contact, Opportunity, OpportunityMeta } from 'types';
+import {
+  Contact,
+  InstallerFiles,
+  Opportunity,
+  OpportunityMeta,
+  PhotoUpload,
+} from 'types';
 import {
   prepareInstallerUpdates,
   prepareWarehouseUpdates,
@@ -121,10 +128,59 @@ export class OrdersService {
     return opportunity;
   }
 
+  private async handleInstallerFileUploads(
+    files: InstallerFiles,
+    customFieldsToUpdate: Record<string, any>[],
+  ): Promise<void> {
+    const fileFieldMap = {
+      resultImage: OpportunityCustomFieldsIds.RESULT_IMAGE,
+      invoiceImage: OpportunityCustomFieldsIds.INVOICE_IMAGE,
+    } as const;
+
+    for (const [key, fieldId] of Object.entries(fileFieldMap)) {
+      const file: Express.Multer.File = files[key];
+
+      if (!file) continue;
+
+      if (!file && key === 'resultImage') {
+        throw new BadRequestException(
+          'resultImage is required when status is "הותקן"',
+        );
+      }
+
+      const uploadResult: PhotoUpload | null =
+        await this.highLevelService.uploadPhoto({
+          file,
+          fieldId,
+        });
+
+      if (!uploadResult) return;
+
+      if (uploadResult?.meta?.[0]) {
+        const { url, mimetype, originalname, size } = uploadResult.meta[0];
+        customFieldsToUpdate.push({
+          id: fieldId,
+          field_value: [
+            {
+              url,
+              meta: {
+                mimetype,
+                name: originalname,
+                size,
+              },
+              deleted: false,
+            },
+          ],
+        });
+      }
+    }
+  }
+
   async updateOpportunity(
     user: Contact,
     opportunityId: string,
     body: UpdateOpportunityDto,
+    files: InstallerFiles,
   ): Promise<Opportunity | null> {
     try {
       if (!user) {
@@ -149,11 +205,12 @@ export class OrdersService {
         }
       } else if (user.type === (ContactRoles.INSTALLER as ContactTypeEnum)) {
         validateInstallerStatus(status);
-        prepareInstallerUpdates(body, customFieldsToUpdate);
+        prepareInstallerUpdates(body, customFieldsToUpdate, files);
 
         if (status === InstallerStatus.SCHEDULED) {
           stageId = installerStages[1];
         } else if (status === InstallerStatus.INSTALLED) {
+          await this.handleInstallerFileUploads(files, customFieldsToUpdate);
           stageId = FinishedOpportunityStage;
         }
       } else {
