@@ -17,7 +17,7 @@ import { ContactTypeEnum } from 'enums';
 import { HighLevelService } from 'services';
 import {
   Contact,
-  InstallerFiles,
+  UpdateOpportunityFiles,
   Opportunity,
   OpportunityMeta,
   PhotoUpload,
@@ -128,13 +128,14 @@ export class OrdersService {
     return opportunity;
   }
 
-  private async handleInstallerFileUploads(
-    files: InstallerFiles,
+  private async handleFileUploads(
+    files: UpdateOpportunityFiles,
     customFieldsToUpdate: Record<string, any>[],
   ): Promise<void> {
     const fileFieldMap = {
       resultImage: OpportunityCustomFieldsIds.RESULT_IMAGE,
       invoiceImage: OpportunityCustomFieldsIds.INVOICE_IMAGE,
+      preInstallImage: OpportunityCustomFieldsIds.PRE_INSTALL_IMAGE,
     } as const;
 
     for (const [key, fieldId] of Object.entries(fileFieldMap)) {
@@ -180,7 +181,7 @@ export class OrdersService {
     user: Contact,
     opportunityId: string,
     body: UpdateOpportunityDto,
-    files: InstallerFiles,
+    files: UpdateOpportunityFiles,
   ): Promise<Opportunity | null> {
     try {
       if (!user) {
@@ -210,9 +211,11 @@ export class OrdersService {
         if (status === InstallerStatus.SCHEDULED) {
           stageId = installerStages[1];
         } else if (status === InstallerStatus.INSTALLED) {
-          await this.handleInstallerFileUploads(files, customFieldsToUpdate);
+          await this.handleFileUploads(files, customFieldsToUpdate);
           stageId = FinishedOpportunityStage;
         }
+      } else if (user.type === (ContactRoles.CUSTOMER as ContactTypeEnum)) {
+        await this.handleFileUploads(files, customFieldsToUpdate);
       } else {
         throw new BadRequestException(
           'Invalid user type. Must be "warehouse" or "installer"',

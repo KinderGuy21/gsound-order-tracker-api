@@ -69,7 +69,8 @@ export type PhotoUpload = {
   }[];
 };
 
-export type InstallerFiles = {
+export type UpdateOpportunityFiles = {
   resultImage?: Express.Multer.File;
   invoiceImage?: Express.Multer.File;
+  preInstallImage?: Express.Multer.File;
 };

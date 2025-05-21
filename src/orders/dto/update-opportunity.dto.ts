@@ -74,6 +74,16 @@ export class UpdateOpportunityDto {
   @IsOptional()
   invoiceImage?: Express.Multer.File;
 
+  @ApiProperty({
+    description: 'Invoice image (optional when installer status is "הותקן")',
+    required: false,
+  })
+  @ValidateIf(
+    (o: UpdateOpportunityDto) => o.userType === ContactTypeEnum.CUSTOMER,
+  )
+  @IsOptional()
+  preInstallImage?: Express.Multer.File;
+
   @IsOptional()
   userType: ContactTypeEnum;
 }

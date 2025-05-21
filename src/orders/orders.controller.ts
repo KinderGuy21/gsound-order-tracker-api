@@ -12,7 +12,7 @@ import {
 import { OrdersService } from './orders.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { InstallerFiles, RequestWithUser } from 'types';
+import { UpdateOpportunityFiles, RequestWithUser } from 'types';
 import { ReceiveOpportunitiesQueryDto, UpdateOpportunityDto } from './dto';
 
 @ApiBearerAuth('access-token')
@@ -61,6 +61,7 @@ export class OrdersController {
     FileFieldsInterceptor([
       { name: 'resultImage', maxCount: 1 },
       { name: 'invoiceImage', maxCount: 1 },
+      { name: 'preInstallImage', maxCount: 1 },
     ]),
   )
   @ApiOperation({
@@ -75,7 +76,7 @@ export class OrdersController {
     @Param('opportunityId') opportunityId: string,
     @Body() body: UpdateOpportunityDto,
     @UploadedFiles()
-    files: InstallerFiles,
+    files: UpdateOpportunityFiles,
   ) {
     return this.ordersService.updateOpportunity(
       req.user,

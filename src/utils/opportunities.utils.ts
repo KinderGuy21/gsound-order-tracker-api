@@ -6,7 +6,7 @@ import {
   WarehouseStatus,
 } from 'consts';
 import { UpdateOpportunityDto } from 'orders/dto';
-import { InstallerFiles } from 'types';
+import { UpdateOpportunityFiles } from 'types';
 
 export function transformNextPageUrl(originalUrl: string): string {
   try {
@@ -75,7 +75,7 @@ export function prepareWarehouseUpdates(
 export function prepareInstallerUpdates(
   body: UpdateOpportunityDto,
   customFieldsToUpdate: Record<string, any>[],
-  files: InstallerFiles,
+  files: UpdateOpportunityFiles,
 ): void {
   customFieldsToUpdate.push({
     id: OpportunityRolesStatusFields.INSTALLER,
