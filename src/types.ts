@@ -5,6 +5,7 @@ export interface RequestWithUser extends Request {
 
 export type ContactTypes =
   | ContactTypeEnum.ADMIN
+  | ContactTypeEnum.EMPLOYEE
   | ContactTypeEnum.WAREHOUSE
   | ContactTypeEnum.INSTALLER
   | ContactTypeEnum.CUSTOMER;
@@ -54,7 +55,7 @@ export type OpportunityMeta = {
 export type OpportunityCustomField = {
   id: string;
   fieldValueString?: string;
-  value?: any;
+  value?: string | number | boolean | null;
 };
 
 export type PhotoUpload = {

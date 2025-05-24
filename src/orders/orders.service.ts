@@ -12,6 +12,7 @@ import {
   OpportunityCustomFieldsIds,
   OpportunityRolesStages,
   WarehouseStatus,
+  wasItPaidOptions,
 } from 'consts';
 import { ContactTypeEnum } from 'enums';
 import { HighLevelService } from 'services';
@@ -21,6 +22,7 @@ import {
   Opportunity,
   OpportunityMeta,
   PhotoUpload,
+  OpportunityCustomField,
 } from 'types';
 import {
   prepareInstallerUpdates,
@@ -83,22 +85,17 @@ export class OrdersService {
       }
 
       const { opportunities, meta } = stageInfo;
+      console.log(
+        `Received ${opportunities.length} opportunities for stage ID: ${stageId}`,
+      );
 
       const filteredOpportunities: Opportunity[] = opportunities.filter(
         (opportunity) => {
           const userType = user?.type;
-
-          if (
-            userType === ContactTypeEnum.ADMIN ||
-            userType === ContactTypeEnum.WAREHOUSE
-          )
-            return true;
-
           if (userType === ContactTypeEnum.INSTALLER) {
             return validateInstallerId(opportunity, user);
           }
-
-          return false;
+          return true;
         },
       );
 
@@ -139,7 +136,10 @@ export class OrdersService {
     } as const;
 
     for (const [key, fieldId] of Object.entries(fileFieldMap)) {
-      const file: Express.Multer.File = files[key];
+      const file = files[key] as Express.Multer.File | undefined;
+      if (file && !(file instanceof Object)) {
+        throw new BadRequestException(`Invalid file format for key: ${key}`);
+      }
 
       if (!file) continue;
 
@@ -197,6 +197,9 @@ export class OrdersService {
       const customFieldsToUpdate: Record<string, any>[] = [];
       const installerStages = OpportunityRolesStages.INSTALLER.split(',');
 
+      const opportunity: Opportunity | null =
+        await this.receiveOpportunity(opportunityId);
+
       if (user.type === (ContactRoles.WAREHOUSE as ContactTypeEnum)) {
         validateWarehouseStatus(status);
         prepareWarehouseUpdates(body, customFieldsToUpdate);
@@ -212,7 +215,22 @@ export class OrdersService {
           stageId = installerStages[1];
         } else if (status === InstallerStatus.INSTALLED) {
           await this.handleFileUploads(files, customFieldsToUpdate);
-          stageId = FinishedOpportunityStage;
+          const paidOption = (
+            opportunity?.customFields as OpportunityCustomField[]
+          )?.find((cf) => cf.id === OpportunityCustomFieldsIds.WAS_IT_PAID);
+
+          if (
+            !paidOption ||
+            !paidOption.fieldValueString ||
+            ![
+              wasItPaidOptions.upfrontCard,
+              wasItPaidOptions.upfrontCash,
+            ].includes(paidOption.fieldValueString)
+          ) {
+            stageId = FinishedOpportunityStage.paid;
+          } else {
+            stageId = FinishedOpportunityStage.unpaid;
+          }
         }
       } else if (user.type === (ContactRoles.CUSTOMER as ContactTypeEnum)) {
         await this.handleFileUploads(files, customFieldsToUpdate);
