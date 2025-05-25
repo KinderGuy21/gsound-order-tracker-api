@@ -31,20 +31,11 @@ export function transformNextPageUrl(originalUrl: string): string {
   }
 }
 
-export function validateWarehouseStatus(status: string): void {
-  const validWarehouseStatuses = Object.values(WarehouseStatus);
+export function validateStatus(status: string, statuses: object): void {
+  const validWarehouseStatuses = Object.values(statuses);
   if (!validWarehouseStatuses.includes(status)) {
     throw new BadRequestException(
-      `Invalid warehouse status. Must be one of: ${validWarehouseStatuses.join(', ')}`,
-    );
-  }
-}
-
-export function validateInstallerStatus(status: string): void {
-  const validInstallerStatuses = Object.values(InstallerStatus);
-  if (!validInstallerStatuses.includes(status)) {
-    throw new BadRequestException(
-      `Invalid installer status. Must be one of: ${validInstallerStatuses.join(', ')}`,
+      `Invalid status. Must be one of: ${validWarehouseStatuses.join(', ')}`,
     );
   }
 }

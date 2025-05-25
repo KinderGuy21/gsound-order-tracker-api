@@ -46,6 +46,11 @@ export const InstallerStatus = {
   INSTALLED: 'הותקן',
 };
 
+export const EmployeeStatus = {
+  NEW: 'חדש',
+  PAID: 'שולם',
+};
+
 export const wasItPaidOptions = {
   complete: 'שולם כולל התקנה',
   partial: 'משלם התקנה למתקין - שילם על המערכת',

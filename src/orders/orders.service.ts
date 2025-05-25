@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ContactRoles,
+  EmployeeStatus,
   FinishedOpportunityStage,
   InstallerStatus,
   OpportunityCustomFieldsIds,
@@ -29,8 +30,7 @@ import {
   prepareWarehouseUpdates,
   transformNextPageUrl,
   validateInstallerId,
-  validateInstallerStatus,
-  validateWarehouseStatus,
+  validateStatus,
 } from 'utils';
 import { UpdateOpportunityDto } from './dto';
 
@@ -200,15 +200,19 @@ export class OrdersService {
       const opportunity: Opportunity | null =
         await this.receiveOpportunity(opportunityId);
 
-      if (user.type === (ContactRoles.WAREHOUSE as ContactTypeEnum)) {
-        validateWarehouseStatus(status);
+      if (user.type === (ContactRoles.EMPLOYEE as ContactTypeEnum)) {
+        validateStatus(status, EmployeeStatus);
+
+        stageId = FinishedOpportunityStage.paid;
+      } else if (user.type === (ContactRoles.WAREHOUSE as ContactTypeEnum)) {
+        validateStatus(status, WarehouseStatus);
         prepareWarehouseUpdates(body, customFieldsToUpdate);
 
         if (status === WarehouseStatus.SENT) {
           stageId = installerStages[0];
         }
       } else if (user.type === (ContactRoles.INSTALLER as ContactTypeEnum)) {
-        validateInstallerStatus(status);
+        validateStatus(status, InstallerStatus);
         prepareInstallerUpdates(body, customFieldsToUpdate, files);
 
         if (status === InstallerStatus.SCHEDULED) {
