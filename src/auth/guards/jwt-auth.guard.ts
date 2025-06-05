@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from 'common';
 import { AuthService } from '../auth.service';
+import { RequestWithUser } from 'types';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -23,8 +24,11 @@ export class JwtAuthGuard implements CanActivate {
 
     if (isPublic) return true;
 
-    const req = context.switchToHttp().getRequest();
-    const authHeader = req.headers['authorization'];
+    const req: RequestWithUser = context.switchToHttp().getRequest();
+    const authHeader =
+      typeof req.headers['authorization'] === 'string'
+        ? req.headers['authorization']
+        : undefined;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing or malformed token');
@@ -36,8 +40,9 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.authService.validateToken(token);
       req.user = payload;
       return true;
-    } catch (error) {
-      throw new UnauthorizedException(error.message || 'Invalid token');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Invalid token';
+      throw new UnauthorizedException(message);
     }
   }
 }

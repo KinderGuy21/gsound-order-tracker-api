@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { AuthModule, JwtAuthGuard } from 'auth';
 import { OrdersModule } from 'orders';
+import { AdminModule } from 'admin';
 import { LoggerMiddleware } from 'common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -23,6 +24,7 @@ import { AppService } from './app.service';
     }),
     AuthModule,
     OrdersModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

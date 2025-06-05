@@ -1,4 +1,9 @@
-import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumberString,
+  IsNumber,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReceiveOpportunitiesQueryDto {
@@ -12,15 +17,8 @@ export class ReceiveOpportunitiesQueryDto {
   @IsNumberString()
   limit?: number;
 
-  @ApiPropertyOptional({ description: 'Start after this opportunity ID' })
+  @ApiPropertyOptional({ description: 'Receive a specific page' })
   @IsOptional()
-  @IsString()
-  startAfterId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Start after this opportunity timestamp',
-  })
-  @IsOptional()
-  @IsString()
-  startAfter?: string;
+  @IsNumber()
+  page?: number;
 }

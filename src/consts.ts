@@ -24,12 +24,26 @@ export const FinishedOpportunityStage = {
 };
 
 export const OpportunityCustomFieldsIds = {
+  LAST_UPDATE_DATE: 'SLdEuekeywgxbega6Yto',
   INSTALL_DATE: 'L5PKDTn1Sf8nBKAwDslc',
   RESULT_IMAGE: 'ZySgPkOKHC7YpJF2ShqZ',
-  INVOICE_IMAGE: 'AEiZJhk4IJSf0XJF5dFl',
+  INVOICE_NUMBER: 'digfJfmQ5yr7W9qtqjHE',
   PRE_INSTALL_IMAGE: 'ua5tkdceaHiVBVERtiqu',
   STUCK_REASON: '95UkzRHQsZzFDHx8lV2r',
-  WAS_IT_PAID: 'g550nU1x2yZt0OtTNuXq',
+  PAYING_OPTION: 'g550nU1x2yZt0OtTNuXq',
+  CITY: 'drz1AlbnzH8EFmvEjbi2',
+  PRODUCT_MODEL: 'DdkNt3ANS357RpdCDKAq',
+  PRODUCT_TYPE: 'ixzzAFkFjE5h8zyeqdiS',
+  ADDITIONAL_PRODUCTS: 'ox9nXOIf72Cp0pjkwqPm',
+  CAR_MODEL: 's2dQuURRb1Hi9k7GBlrL',
+  YEAR: 'DaVSb1P4V7l5rywkUJHy',
+  INSTALLER: 'm2YMEPp0W9g74QxNirAk',
+  TOTAL_PRICE: 'PciIEBgaD5PDN1rkAzsj',
+  INSTALLATION_COST: 'vlcf7JGW7Wewmo1Kvcch',
+  INSTALLATION_SCHEDULED_STATUS: '1Et2Wp25etRCpAPzQV9Q',
+  INVOICE_STATUS: 'ZEhQp3seL9KDIPf9ogeB',
+  WAREHOUSE_STATUS: 'rV48OOjGojlasHSkHcqB',
+  INSTALLER_STATUS: 'REYvwwlGsxqaZL4GohB8',
 };
 
 export const WarehouseStatus = {

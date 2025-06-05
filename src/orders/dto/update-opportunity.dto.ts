@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
+import { IsOptional, IsString, ValidateIf } from 'class-validator';
 import { ContactTypeEnum } from 'enums';
 import { InstallerStatus, WarehouseStatus } from 'consts';
 export class UpdateOpportunityDto {
@@ -72,10 +72,10 @@ export class UpdateOpportunityDto {
       o.status === InstallerStatus.INSTALLED,
   )
   @IsOptional()
-  invoiceImage?: Express.Multer.File;
+  invoiceNumber?: number;
 
   @ApiProperty({
-    description: 'Invoice image (optional when installer status is "הותקן")',
+    description: 'Invoice number (optional when installer status is "הותקן")',
     required: false,
   })
   @ValidateIf(

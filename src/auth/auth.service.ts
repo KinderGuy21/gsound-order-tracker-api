@@ -18,7 +18,8 @@ export class AuthService {
         authRequest.email,
         authRequest.phone,
       );
-      const contact = contacts.length > 0 ? contacts[0] : null;
+      const contact: Contact | null =
+        contacts.length > 0 ? (contacts[0] as Contact) : null;
       if (contact) {
         return {
           id: contact.id,
@@ -31,7 +32,8 @@ export class AuthService {
         };
       }
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Error fetching contact:', error);
       throw new UnauthorizedException('Failed to validate user');
     }
   }
@@ -88,6 +90,7 @@ export class AuthService {
         refreshToken: newRefreshToken,
       };
     } catch (error) {
+      console.error('Error refreshing tokens:', error);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -100,18 +103,9 @@ export class AuthService {
         return payload;
       }
 
-      // const authRequest: AuthRequestDto = {
-      //   email: payload.email,
-      //   phone: payload.phone,
-      // };
-
-      // const contact = await this.fetchContact(authRequest);
-      // if (!contact) {
-      //   throw new UnauthorizedException('User no longer exists');
-      // }
-
       return payload;
     } catch (error) {
+      console.error('Error validating token:', error);
       throw new UnauthorizedException('Invalid token');
     }
   }

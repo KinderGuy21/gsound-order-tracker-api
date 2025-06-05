@@ -28,7 +28,6 @@ import {
 import {
   prepareInstallerUpdates,
   prepareWarehouseUpdates,
-  transformNextPageUrl,
   validateInstallerId,
   validateStatus,
 } from 'utils';
@@ -43,15 +42,13 @@ export class OrdersService {
   async receiveUserOpportunities({
     stageIds,
     user,
-    limit = 50,
-    startAfter = null,
-    startAfterId = null,
+    limit = 100,
+    page = null,
   }: {
     stageIds: string[];
     user: Contact;
     limit?: number;
-    startAfter?: string | null;
-    startAfterId?: string | null;
+    page?: number | null;
   }) {
     if (!stageIds || stageIds.length === 0) {
       const userTypeKey =
@@ -73,8 +70,7 @@ export class OrdersService {
       const stageInfo = await this.highLevelService.fetchOpportunities({
         stageId: stageId,
         limit,
-        startAfter,
-        startAfterId,
+        page,
       });
 
       if (!stageInfo || !stageInfo?.opportunities || !stageInfo?.meta) {
@@ -100,10 +96,8 @@ export class OrdersService {
       );
 
       const updatedMeta = {
+        ...meta,
         total: filteredOpportunities.length,
-        ...(meta?.nextPageUrl && {
-          nextPageUrl: transformNextPageUrl(meta.nextPageUrl),
-        }),
       };
       if (filteredOpportunities.length !== 0) {
         returnPayload.opportunities.push(...filteredOpportunities);
@@ -131,7 +125,6 @@ export class OrdersService {
   ): Promise<void> {
     const fileFieldMap = {
       resultImage: OpportunityCustomFieldsIds.RESULT_IMAGE,
-      invoiceImage: OpportunityCustomFieldsIds.INVOICE_IMAGE,
       preInstallImage: OpportunityCustomFieldsIds.PRE_INSTALL_IMAGE,
     } as const;
 
@@ -194,7 +187,12 @@ export class OrdersService {
       }
 
       let stageId: string | null = null;
-      const customFieldsToUpdate: Record<string, any>[] = [];
+      const customFieldsToUpdate: Record<string, any>[] = [
+        {
+          id: OpportunityCustomFieldsIds.LAST_UPDATE_DATE,
+          value: new Date().toISOString(),
+        },
+      ];
       const installerStages = OpportunityRolesStages.INSTALLER.split(',');
 
       const opportunity: Opportunity | null =
@@ -221,7 +219,7 @@ export class OrdersService {
           await this.handleFileUploads(files, customFieldsToUpdate);
           const paidOption = (
             opportunity?.customFields as OpportunityCustomField[]
-          )?.find((cf) => cf.id === OpportunityCustomFieldsIds.WAS_IT_PAID);
+          )?.find((cf) => cf.id === OpportunityCustomFieldsIds.PAYING_OPTION);
 
           if (
             !paidOption ||
@@ -240,7 +238,7 @@ export class OrdersService {
         await this.handleFileUploads(files, customFieldsToUpdate);
       } else {
         throw new BadRequestException(
-          'Invalid user type. Must be "warehouse" or "installer"',
+          'Invalid user type. Must be "warehouse", "employee", or "installer"',
         );
       }
 

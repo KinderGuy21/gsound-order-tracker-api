@@ -43,18 +43,28 @@ export type Opportunity = {
   dateAdded: string;
   dateUpdated: string;
   contactId: string;
+  monetaryValue?: number;
   customFields?: Record<string, any> | [];
   contact: Contact;
 };
 
 export type OpportunityMeta = {
   total: number;
-  nextPageUrl?: string;
+  currentPage?: number | string | null;
+  nextPage?: number | string | null;
+  prevPage?: number | string | null;
+};
+
+export type OpportunitiesResponse = {
+  opportunities?: Opportunity[];
+  meta?: OpportunityMeta;
 };
 
 export type OpportunityCustomField = {
   id: string;
   fieldValueString?: string;
+  fieldValueArray?: string[];
+  fieldValueNumber?: number;
   value?: string | number | boolean | null;
 };
 
@@ -72,6 +82,5 @@ export type PhotoUpload = {
 
 export type UpdateOpportunityFiles = {
   resultImage?: Express.Multer.File;
-  invoiceImage?: Express.Multer.File;
   preInstallImage?: Express.Multer.File;
 };

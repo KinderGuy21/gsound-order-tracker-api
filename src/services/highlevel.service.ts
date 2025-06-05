@@ -1,8 +1,13 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HighLevelClient } from 'common';
 import * as FormData from 'form-data';
-import { v4 as uuidv4 } from 'uuid';
-import { Opportunity, OpportunityMeta, PhotoUpload, Pipeline } from 'types';
+import {
+  OpportunitiesResponse,
+  Opportunity,
+  OpportunityCustomField,
+  OpportunityMeta,
+  PhotoUpload,
+} from 'types';
 
 @Injectable()
 export class HighLevelService {
@@ -76,58 +81,57 @@ export class HighLevelService {
     }
   }
 
-  async fetchPipelines(): Promise<Pipeline[] | null> {
+  async fetchOpportunityCustomFields(): Promise<
+    OpportunityCustomField[] | null
+  > {
     try {
-      const result: { pipelines?: Pipeline[] } = await this.ghlClient.request(
-        `/opportunities/pipelines?locationId=${this.locationId}`,
-        'GET',
-      );
+      const result: { customFields?: OpportunityCustomField[] } =
+        await this.ghlClient.request(
+          `/locations/${this.locationId}/customFields?model=opportunity`,
+          'GET',
+        );
 
       if (result) {
-        return result.pipelines || null;
+        return result.customFields || null;
       }
       return null;
     } catch (error) {
-      this.logger.error('Error fetching pipelines:', error);
+      this.logger.error('Error fetching custom Fields:', error);
       throw new HttpException(
-        'Failed to fetch pipelines',
+        'Failed to fetch custom fields',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   async fetchOpportunities({
+    limit = 100,
     stageId,
-    limit = 50,
-    startAfter = null,
-    startAfterId = null,
+    page = null,
+    date = null,
+    endDate = null,
   }: {
-    stageId: string;
     limit: number;
-    startAfter?: string | null;
-    startAfterId?: string | null;
-  }): Promise<{
-    opportunities?: Opportunity[];
-    meta?: OpportunityMeta;
-  } | null> {
+    stageId?: string | null;
+    page?: number | null;
+    date?: string | null;
+    endDate?: string | null;
+  }): Promise<OpportunitiesResponse | null> {
     try {
-      if (!stageId) {
-        throw new HttpException('Stage ID is required', HttpStatus.BAD_REQUEST);
-      }
-      const result: { opportunities?: Opportunity[]; meta?: OpportunityMeta } =
-        await this.ghlClient.request(
-          `/opportunities/search`,
-          'GET',
-          {},
-          {
-            location_id: this.locationId,
-            pipeline_id: this.pipelineId,
-            pipeline_stage_id: stageId,
-            limit,
-            startAfter: startAfter || null,
-            startAfterId: startAfterId || null,
-          },
-        );
+      const result: OpportunitiesResponse = await this.ghlClient.request(
+        `/opportunities/search`,
+        'GET',
+        {},
+        {
+          location_id: this.locationId,
+          pipeline_id: this.pipelineId,
+          limit,
+          stageId: stageId || null,
+          date: date || null,
+          endDate: endDate || null,
+          page: page || null,
+        },
+      );
 
       if (result) {
         return { opportunities: result?.opportunities, meta: result?.meta };
@@ -140,6 +144,42 @@ export class HighLevelService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async fetchAllOpportunities({
+    limit = 100,
+    stageId,
+    date,
+    endDate,
+  }: {
+    limit?: number;
+    stageId?: string | null;
+    date?: string | null;
+    endDate?: string | null;
+  }): Promise<OpportunitiesResponse> {
+    const allOpportunities: Opportunity[] = [];
+    const allMeta: OpportunityMeta = { total: 0 };
+
+    const fetchRecursive = async (page: number | null = null) => {
+      const response = await this.fetchOpportunities({
+        limit,
+        stageId,
+        page,
+        date,
+        endDate,
+      });
+      if (response?.opportunities && response?.meta) {
+        allOpportunities.push(...response.opportunities);
+        allMeta.total = allMeta.total + (response.meta?.total || 0);
+        const nextPage = response.meta?.nextPage;
+        if (nextPage && typeof nextPage === 'number') {
+          await fetchRecursive(nextPage);
+        }
+      }
+    };
+
+    await fetchRecursive();
+    return { opportunities: allOpportunities, meta: allMeta };
   }
 
   async fetchOpportunity(id: string): Promise<Opportunity | null> {
@@ -215,14 +255,12 @@ export class HighLevelService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const fileInfo = file[0];
-
       const formData = new FormData();
 
-      formData.append(fieldId, fileInfo.buffer, {
-        filename: fileInfo.originalname || 'upload.png',
-        contentType: fileInfo.mimetype || 'application/octet-stream',
-        knownLength: fileInfo.size,
+      formData.append(fieldId, file.buffer, {
+        filename: file.originalname || 'upload.png',
+        contentType: file.mimetype || 'application/octet-stream',
+        knownLength: file.size,
       });
 
       formData.append('id', fieldId);

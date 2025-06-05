@@ -8,29 +8,6 @@ import {
 import { UpdateOpportunityDto } from 'orders/dto';
 import { UpdateOpportunityFiles } from 'types';
 
-export function transformNextPageUrl(originalUrl: string): string {
-  try {
-    const url = new URL(originalUrl);
-    const params = url.searchParams;
-
-    const limit = params.get('limit');
-    const stageId = params.get('pipeline_stage_id');
-    const startAfter = params.get('startAfter');
-    const startAfterId = params.get('startAfterId');
-
-    const newParams = new URLSearchParams();
-    if (limit) newParams.set('limit', limit);
-    if (stageId) newParams.set('stageIds', stageId);
-    if (startAfter) newParams.set('startAfter', startAfter);
-    if (startAfterId) newParams.set('startAfterId', startAfterId);
-
-    return `${process.env.API_URL}/orders/opportunities?${newParams.toString()}`;
-  } catch (error) {
-    console.warn('Failed to transform nextPageUrl:', error);
-    return '';
-  }
-}
-
 export function validateStatus(status: string, statuses: object): void {
   const validWarehouseStatuses = Object.values(statuses);
   if (!validWarehouseStatuses.includes(status)) {
@@ -85,6 +62,12 @@ export function prepareInstallerUpdates(
       value: body.installDate,
     });
   } else if (body.status === InstallerStatus.INSTALLED) {
+    if (body?.invoiceNumber) {
+      customFieldsToUpdate.push({
+        id: OpportunityCustomFieldsIds.INVOICE_NUMBER,
+        value: body.invoiceNumber,
+      });
+    }
     if (!files?.resultImage) {
       throw new BadRequestException(
         'resultImage is required when status is "הותקן"',

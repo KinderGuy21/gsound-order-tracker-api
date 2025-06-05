@@ -33,14 +33,13 @@ export class OrdersController {
     @Request() req: RequestWithUser,
     @Query() query: ReceiveOpportunitiesQueryDto,
   ) {
-    const { stageIds, limit, startAfterId, startAfter } = query;
+    const { stageIds, limit, page } = query;
     const idsArray = stageIds ? stageIds.split(',') : [];
     return this.ordersService.receiveUserOpportunities({
       stageIds: idsArray,
       user: req.user,
       limit,
-      startAfter,
-      startAfterId,
+      page,
     });
   }
 
@@ -60,7 +59,6 @@ export class OrdersController {
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'resultImage', maxCount: 1 },
-      { name: 'invoiceImage', maxCount: 1 },
       { name: 'preInstallImage', maxCount: 1 },
     ]),
   )
