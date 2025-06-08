@@ -54,16 +54,13 @@ export const splitOpportunitiesPerInstaller = (
   const result: InstallerOpportunities[] = [];
 
   for (const [name, installer] of installersByName.entries()) {
-    const opportunities = resultMap[name] ?? [];
-    if (opportunities.length > 0) {
-      result.push({
-        name,
-        id: installer.id,
-        phone: installer.phone,
-        email: installer.email,
-        opportunities,
-      });
-    }
+    result.push({
+      name,
+      id: installer.id,
+      phone: installer.phone,
+      email: installer.email,
+      opportunities: resultMap[name] ?? [],
+    });
   }
 
   return result;
