@@ -98,7 +98,7 @@ export class AdminService {
           ? 'Company → Installer'
           : installerOwesCompany
             ? 'Installer → Company'
-            : 'None';
+            : null;
 
         const method =
           installerOwesCompany && payingOption === wasItPaidOptions.upfrontCash
