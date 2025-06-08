@@ -135,7 +135,6 @@ export class AdminService {
 
   async updateInstallers(body: UpdateInstallerDto) {
     const { opportunityIds, invoiceNumber } = body;
-    console.log(body);
     if (!opportunityIds || !opportunityIds.length) {
       throw new Error('No opportunities provided for update');
     }
@@ -159,11 +158,10 @@ export class AdminService {
 
     for (const opportunityId of opportunityIds) {
       try {
-        const up = await this.highLevelService.editOpportunity({
+        await this.highLevelService.editOpportunity({
           id: opportunityId,
           customFields: updatedFields,
         });
-        console.log(up);
       } catch (error) {
         console.error(`Failed to update opportunity ${opportunityId}:`, error);
         throw new Error(`Failed to update opportunity ${opportunityId}`);

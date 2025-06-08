@@ -81,9 +81,6 @@ export class OrdersService {
       }
 
       const { opportunities, meta } = stageInfo;
-      console.log(
-        `Received ${opportunities.length} opportunities for stage ID: ${stageId}`,
-      );
 
       const filteredOpportunities: Opportunity[] = opportunities.filter(
         (opportunity) => {

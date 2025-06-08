@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AdminGuard } from './guards';
@@ -20,7 +20,7 @@ export class AdminController {
     return this.adminService.receiveInstallers(date, endDate);
   }
 
-  @Post('/installers')
+  @Patch('/installers')
   updateInstallers(@Body() body: UpdateInstallerDto) {
     return this.adminService.updateInstallers(body);
   }
