@@ -5,7 +5,7 @@ import {
   wasItPaidOptions,
 } from 'consts';
 import { HighLevelService } from 'services/highlevel.service';
-import { Opportunity, OpportunityCustomField } from 'types';
+import { Contact, InstallerOpportunities, OpportunityCustomField } from 'types';
 import {
   getCustomField,
   getValueFromField,
@@ -19,6 +19,9 @@ export class AdminService {
   constructor(private readonly highLevelService: HighLevelService) {}
 
   async receiveInstallers(date: string, endDate: string) {
+    const installerList: Contact[] | null =
+      await this.highLevelService.fetchInstallersContacts();
+
     const allOpportunities = await this.highLevelService.fetchAllOpportunities({
       limit: 100,
       date,
@@ -26,109 +29,110 @@ export class AdminService {
     });
 
     const allowedFieldIds = new Set(Object.values(OpportunityCustomFieldsIds));
-    const splittedOpportunities: Record<string, Opportunity[]> =
-      splitOpportunitiesPerInstaller(allOpportunities);
 
-    const parsed = Object.fromEntries(
-      Object.entries(splittedOpportunities).map(
-        ([installer, opportunities]) => {
-          const filtered = opportunities.map((opp) => {
-            const customFields = Array.isArray(opp.customFields)
-              ? opp.customFields.filter((cf: OpportunityCustomField) =>
-                  allowedFieldIds.has(cf.id),
-                )
-              : [];
+    const splittedOpportunities: InstallerOpportunities[] =
+      splitOpportunitiesPerInstaller(allOpportunities, installerList);
 
-            const payingOption = getValueFromField(
-              getCustomField(
-                customFields,
-                OpportunityCustomFieldsIds.PAYING_OPTION,
-              ),
-            );
+    const parsed = splittedOpportunities.map((installer) => {
+      const filteredOpportunities = installer.opportunities.map((opp) => {
+        const customFields = Array.isArray(opp.customFields)
+          ? opp.customFields.filter((cf: OpportunityCustomField) =>
+              allowedFieldIds.has(cf.id),
+            )
+          : [];
 
-            const invoiceNumber = getValueFromField(
-              getCustomField(
-                customFields,
-                OpportunityCustomFieldsIds.INVOICE_NUMBER,
-              ),
-            );
+        const payingOption = getValueFromField(
+          getCustomField(
+            customFields,
+            OpportunityCustomFieldsIds.PAYING_OPTION,
+          ),
+        );
 
-            const installCost =
-              getValueFromField(
-                getCustomField(
-                  customFields,
-                  OpportunityCustomFieldsIds.INSTALLATION_COST,
-                ),
-              ) ?? 0;
+        const invoiceNumber = getValueFromField(
+          getCustomField(
+            customFields,
+            OpportunityCustomFieldsIds.INVOICE_NUMBER,
+          ),
+        );
 
-            const totalPrice =
-              getValueFromField(
-                getCustomField(
-                  customFields,
-                  OpportunityCustomFieldsIds.TOTAL_PRICE,
-                ),
-              ) ?? 0;
-
-            const isUnpaidStage =
-              opp.stageId === FinishedOpportunityStage.unpaid;
-
-            const companyOwesInstaller =
-              payingOption === wasItPaidOptions.complete && !invoiceNumber;
-
-            const companyOwesInstallerAmount =
-              companyOwesInstaller && installCost
-                ? round(parseInt(String(installCost)) * 1.18)
-                : null;
-
-            const installerOwesCompany =
-              (payingOption === wasItPaidOptions.upfrontCard ||
-                payingOption === wasItPaidOptions.upfrontCash) &&
-              isUnpaidStage;
-
-            const installerOwesCompanyAmount =
-              installerOwesCompany && totalPrice && installCost
-                ? round(
-                    parseInt(String(totalPrice)) -
-                      parseInt(String(installCost)) * 1.18,
-                  )
-                : null;
-
-            const direction = companyOwesInstaller
-              ? 'Company → Installer'
-              : installerOwesCompany
-                ? 'Installer → Company'
-                : 'None';
-
-            const method =
-              installerOwesCompany &&
-              payingOption === wasItPaidOptions.upfrontCash
-                ? 'cash'
-                : installerOwesCompany &&
-                    payingOption === wasItPaidOptions.upfrontCard
-                  ? 'card'
-                  : null;
-
-            return {
-              id: opp.id,
-              name: opp.name,
-              monetaryValue: opp.monetaryValue,
+        const installCost =
+          getValueFromField(
+            getCustomField(
               customFields,
-              paymentStatus: {
-                invoiceNumber: invoiceNumber ?? null,
-                companyOwesInstaller,
-                companyOwesInstallerAmount,
-                installerOwesCompany,
-                installerOwesCompanyAmount,
-                direction,
-                method,
-              },
-            };
-          });
+              OpportunityCustomFieldsIds.INSTALLATION_COST,
+            ),
+          ) ?? 0;
 
-          return [installer, filtered];
-        },
-      ),
-    );
+        const totalPrice =
+          getValueFromField(
+            getCustomField(
+              customFields,
+              OpportunityCustomFieldsIds.TOTAL_PRICE,
+            ),
+          ) ?? 0;
+
+        const isUnpaidStage = opp.stageId === FinishedOpportunityStage.unpaid;
+
+        const companyOwesInstaller =
+          payingOption === wasItPaidOptions.complete && !invoiceNumber;
+
+        const companyOwesInstallerAmount =
+          companyOwesInstaller && installCost
+            ? round(parseInt(String(installCost)) * 1.18)
+            : null;
+
+        const installerOwesCompany =
+          (payingOption === wasItPaidOptions.upfrontCard ||
+            payingOption === wasItPaidOptions.upfrontCash) &&
+          isUnpaidStage;
+
+        const installerOwesCompanyAmount =
+          installerOwesCompany && totalPrice && installCost
+            ? round(
+                parseInt(String(totalPrice)) -
+                  parseInt(String(installCost)) * 1.18,
+              )
+            : null;
+
+        const direction = companyOwesInstaller
+          ? 'Company → Installer'
+          : installerOwesCompany
+            ? 'Installer → Company'
+            : 'None';
+
+        const method =
+          installerOwesCompany && payingOption === wasItPaidOptions.upfrontCash
+            ? 'cash'
+            : installerOwesCompany &&
+                payingOption === wasItPaidOptions.upfrontCard
+              ? 'card'
+              : null;
+
+        return {
+          id: opp.id,
+          name: opp.name,
+          monetaryValue: opp.monetaryValue,
+          customFields,
+          paymentStatus: {
+            invoiceNumber: invoiceNumber ?? null,
+            companyOwesInstaller,
+            companyOwesInstallerAmount,
+            installerOwesCompany,
+            installerOwesCompanyAmount,
+            direction,
+            method,
+          },
+        };
+      });
+
+      return {
+        id: installer.id,
+        name: installer.name,
+        phone: installer.phone,
+        email: installer.email,
+        opportunities: filteredOpportunities,
+      };
+    });
 
     return parsed;
   }

@@ -23,6 +23,8 @@ export const FinishedOpportunityStage = {
   unpaid: '77ed3688-c169-44f1-86a2-b69c524e919e',
 };
 
+export const ContactInstallerFieldId = 'RvpPoRLQg1kgBJmlFpVd';
+
 export const OpportunityCustomFieldsIds = {
   LAST_UPDATE_DATE: 'SLdEuekeywgxbega6Yto',
   INSTALL_DATE: 'L5PKDTn1Sf8nBKAwDslc',

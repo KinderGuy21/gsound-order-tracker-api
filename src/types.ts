@@ -68,6 +68,12 @@ export type OpportunityCustomField = {
   value?: string | number | boolean | null;
 };
 
+export type CustomFieldKeys = {
+  id: string;
+  fieldKey: string;
+  picklistOptions: string[];
+};
+
 export type PhotoUpload = {
   uploadedFiles: Record<string, any>;
   meta: {
@@ -83,4 +89,12 @@ export type PhotoUpload = {
 export type UpdateOpportunityFiles = {
   resultImage?: Express.Multer.File;
   preInstallImage?: Express.Multer.File;
+};
+
+export type InstallerOpportunities = {
+  name: string;
+  phone?: string;
+  email?: string;
+  id: string;
+  opportunities: Opportunity[];
 };

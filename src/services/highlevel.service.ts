@@ -2,9 +2,10 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HighLevelClient } from 'common';
 import * as FormData from 'form-data';
 import {
+  Contact,
+  CustomFieldKeys,
   OpportunitiesResponse,
   Opportunity,
-  OpportunityCustomField,
   OpportunityMeta,
   PhotoUpload,
 } from 'types';
@@ -81,18 +82,56 @@ export class HighLevelService {
     }
   }
 
-  async fetchOpportunityCustomFields(): Promise<
-    OpportunityCustomField[] | null
-  > {
+  async fetchInstallersContacts(): Promise<Contact[] | null> {
     try {
-      const result: { customFields?: OpportunityCustomField[] } =
+      const filters = [
+        {
+          group: 'AND',
+          filters: [
+            {
+              field: 'type',
+              operator: 'eq',
+              value: 'installer',
+            },
+          ],
+        },
+      ];
+
+      const result: { contacts?: Contact[] } = await this.ghlClient.request(
+        '/contacts/search',
+        'POST',
+        {
+          locationId: this.locationId,
+          pageLimit: 1,
+          filters,
+        },
+      );
+
+      if (result) {
+        return result.contacts || null;
+      }
+      return null;
+    } catch (error) {
+      this.logger.error('Error searching contacts:', error);
+      throw new HttpException(
+        'Failed to search contacts',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async fetchOpportunityCustomField(
+    id: string,
+  ): Promise<CustomFieldKeys | null> {
+    try {
+      const result: { customField?: CustomFieldKeys } =
         await this.ghlClient.request(
-          `/locations/${this.locationId}/customFields?model=opportunity`,
+          `/locations/${this.locationId}/customFields/${id}`,
           'GET',
         );
 
       if (result) {
-        return result.customFields || null;
+        return result.customField || null;
       }
       return null;
     } catch (error) {

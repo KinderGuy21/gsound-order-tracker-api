@@ -1,4 +1,7 @@
+import { ContactInstallerFieldId } from 'consts';
 import {
+  Contact,
+  InstallerOpportunities,
   OpportunitiesResponse,
   Opportunity,
   OpportunityCustomField,
@@ -6,9 +9,23 @@ import {
 
 export const splitOpportunitiesPerInstaller = (
   OpportunitiesList: OpportunitiesResponse,
-) => {
-  const result: Record<string, Opportunity[]> = {};
+  installerList: Contact[] | null,
+): InstallerOpportunities[] => {
+  const resultMap: Record<string, Opportunity[]> = {};
   const opportunities = OpportunitiesList?.opportunities ?? [];
+
+  const installersByName = new Map<string, Contact>();
+  installerList?.forEach((i) => {
+    const cfs = i?.customFields as OpportunityCustomField[];
+    const name = cfs?.find((cf) => cf.id === ContactInstallerFieldId)?.value;
+    if (name && typeof name === 'string') {
+      installersByName.set(name, i);
+    }
+  });
+
+  if (installersByName.size === 0) {
+    throw new Error('No installers found');
+  }
 
   for (const opportunity of opportunities) {
     const customFields = opportunity?.customFields as
@@ -16,17 +33,37 @@ export const splitOpportunitiesPerInstaller = (
       | undefined;
     if (!customFields) continue;
 
-    const installerId = customFields.find(
+    const installerName = customFields.find(
       (cf) => cf.id === process.env.OPPORTUNITY_INSTALLER_NAME_FIELD_ID,
     )?.fieldValueString;
 
-    if (!installerId || installerId === 'ללא התקנה') continue;
+    if (
+      !installerName ||
+      installerName === 'ללא התקנה' ||
+      !installersByName.has(installerName)
+    )
+      continue;
 
-    if (!result[installerId]) {
-      result[installerId] = [];
+    if (!resultMap[installerName]) {
+      resultMap[installerName] = [];
     }
 
-    result[installerId].push(opportunity);
+    resultMap[installerName].push(opportunity);
+  }
+
+  const result: InstallerOpportunities[] = [];
+
+  for (const [name, installer] of installersByName.entries()) {
+    const opportunities = resultMap[name] ?? [];
+    if (opportunities.length > 0) {
+      result.push({
+        name,
+        id: installer.id,
+        phone: installer.phone,
+        email: installer.email,
+        opportunities,
+      });
+    }
   }
 
   return result;
