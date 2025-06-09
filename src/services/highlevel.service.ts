@@ -120,29 +120,6 @@ export class HighLevelService {
     }
   }
 
-  async fetchOpportunityCustomField(
-    id: string,
-  ): Promise<CustomFieldKeys | null> {
-    try {
-      const result: { customField?: CustomFieldKeys } =
-        await this.ghlClient.request(
-          `/locations/${this.locationId}/customFields/${id}`,
-          'GET',
-        );
-
-      if (result) {
-        return result.customField || null;
-      }
-      return null;
-    } catch (error) {
-      this.logger.error('Error fetching custom Fields:', error);
-      throw new HttpException(
-        'Failed to fetch custom fields',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   async fetchOpportunities({
     limit = 100,
     stageId,
@@ -165,7 +142,7 @@ export class HighLevelService {
           location_id: this.locationId,
           pipeline_id: this.pipelineId,
           limit,
-          stageId: stageId || null,
+          pipeline_stage_id: stageId,
           date: date || null,
           endDate: endDate || null,
           page: page || null,
