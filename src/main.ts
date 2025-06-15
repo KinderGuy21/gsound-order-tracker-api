@@ -15,6 +15,7 @@ async function bootstrap() {
   );
 
   app.enableCors();
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
     .setTitle('HighLevel OAuth API')
@@ -31,7 +32,7 @@ async function bootstrap() {
     )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('swagger', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
     },
